@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title data-i18n="app_title">Troubleshooting POS</title>
+
+<style> 
+ :root { 
+ --bg1: rgba(0,255,255,0.15); 
+ --bg2: rgba(255,0,255,0.15); 
+ --bg3a: #05010d; 
+ --bg3b: #0b0120; 
+ --panel: rgba(20, 10, 40, 0.9); 
+ --text: #fff; 
+ --accent1: #ff3c00; 
+ --accent2: #ff00ff; 
+ --accent3: #00ffff; 
+ --btn-bg: linear-gradient(135deg, #ff3c00, #ff00ff); 
+ --btn-bg-hover: linear-gradient(135deg, #00ffff, #ff00ff); 
+ } 
+ * { box-sizing: border-box; } 
+ body { 
+ font-family: Arial, sans-serif; 
+ margin: 0; padding: 0; 
+ background: linear-gradient(120deg, var(--bg1), transparent 40%), 
+ linear-gradient(240deg, var(--bg2), transparent 40%), 
+ linear-gradient(0deg, var(--bg3a), var(--bg3b)); 
+ background-size: 200% 200%; 
+ animation: cyberMove 10s linear infinite; 
+ color: var(--text); 
+ } 
+ @keyframes cyberMove { 0%{background-position:0% 50%} 100%{background-position:100% 50%} } 
+ .brand-left,.brand-right{position:fixed;top:16px;z-index:1000;display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:8px;background:rgba(0,0,0,.12);backdrop-filter:blur(2px)} 
+ .brand-left{left:16px} .brand-right{right:16px} 
+ .brand-left img{height:38px;width:auto;display:block;filter:drop-shadow(0 0 6px rgba(0,255,255,.5))} 
+ .brand-right .brand-text{font-weight:700;letter-spacing:.3px;color:#fff;text-shadow:0 0 6px rgba(0,255,255,.35),0 0 10px rgba(255,0,255,.25);font-size:18px;white-space:nowrap} 
+ .page-top-spacer{height:80px;width:100%} 
+ #app{max-width:980px;margin:0 auto 32px;padding:24px 24px 40px;background:var(--panel);border-radius:12px;box-shadow:0 0 20px rgba(0,255,255,.4),0 0 40px rgba(255,0,255,.2)} 
+ .app-header{display:grid;grid-template-columns:1fr;align-items:center;gap:8px;margin-bottom:12px;position:relative;text-align:center} 
+ h1{margin:0;text-align:center;text-shadow:0 0 5px var(--accent3),0 0 10px var(--accent3),0 0 20px var(--accent2);font-size:1.6rem;line-height:1.2} 
+ .step-title{margin-top:10px;margin-bottom:8px;font-size:1.2rem} 
+ .visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap;border:0;padding:0;margin:-1px} 
+ .step{display:none;margin:12px 0 28px} 
+ .step.is-active{display:block} 
+ .buttons-center{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:15px;width:100%} 
+ .btn,.btn-secondary{background:var(--btn-bg);color:#fff;border:none;padding:12px 20px;margin:6px 4px;cursor:pointer;border-radius:8px;font-size:15px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;box-shadow:0 0 10px rgba(255,60,0,.6),0 0 20px rgba(255,0,255,.4);transition:all .25s ease} 
+ .btn:hover,.btn-secondary:hover{transform:translateY(-1px) scale(1.04);box-shadow:0 0 15px rgba(0,255,255,.8),0 0 30px rgba(255,0,255,.6);background:var(--btn-bg-hover)} 
+ .btn-secondary{background:linear-gradient(135deg,#7a7a7a,#444);box-shadow:0 0 10px rgba(120,120,120,.4),0 0 20px rgba(80,80,80,.3);text-transform:none;letter-spacing:0} 
+ .buttons-center button[data-back], .buttons-center .back{order:-1;margin-right:auto;} 
+ button[data-back], .back{background:linear-gradient(135deg,#7a7a7a,#444);box-shadow:0 0 10px rgba(120,120,120,.4),0 0 20px rgba(80,80,80,.3);text-transform:none;letter-spacing:0} 
+ .bottom-actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap} 
+ .image-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px} 
+ .help-image{width:150px;height:110px;object-fit:cover;border-radius:12px;cursor:pointer;transition:.25s;box-shadow:0 0 12px rgba(0,0,0,.4)} 
+ .help-image:hover{transform:scale(1.08);box-shadow:0 0 20px rgba(0,255,255,.8)} 
+ ol,ul{padding-left:20px} 
+ li{color:#ffd3d3} 
+ .lang-switcher{position:absolute; top:-8px; right:0; display:flex; gap:6px} 
+ .lang-switcher button{padding:6px 10px; font-size:12px; border-radius:6px; text-transform:none} 
+ 
+ /* MODAL LIGHTBOX */
+ .modal {
+   display: none;
+   position: fixed;
+   z-index: 9999;
+   left: 0; top: 0;
+   width: 100%; height: 100%;
+   background-color: rgba(0,0,0,0.9);
+   backdrop-filter: blur(8px);
+   align-items: center;
+   justify-content: center;
+   cursor: zoom-out;
+ }
+ .modal.is-visible { display: flex; }
+ .modal-content {
+   max-width: 95%;
+   max-height: 95%;
+   border-radius: 10px;
+   box-shadow: 0 0 30px var(--accent3), 0 0 60px var(--accent2);
+ }
+ /* FIX: rimuovi il riquadro bianco di focus iniziale */
+ #steps:focus { outline: none; }
+</style> 
+</head>
+<body>
+  <!-- BRAND -->
+  <div class="brand-left" aria-hidden="false">
+    <img src="images/dxc.png" alt="Logo DXC" data-i18n="alt_dxc_logo" data-i18n-attr="alt"/>
+  </div>
+  <div class="brand-right" aria-label="EssilorLuxottica">
+    <span class="brand-text">EssilorLuxottica</span>
+  </div>
+
+  <div class="page-top-spacer" aria-hidden="true"></div>
+
+  <div id="app" role="application" aria-live="polite">
+    <header class="app-header">
+      <h1 data-i18n="app_title">Troubleshooting POS</h1>
+      <!-- Switcher lingua disponibile da qualsiasi step -->
+      <div class="lang-switcher" aria-label="Language switcher">
+        <button type="button" class="btn-secondary" onclick="setLanguage('it')" data-i18n="btn_lang_it">Italiano 🇮🇹</button>
+        <button type="button" class="btn-secondary" onclick="setLanguage('en')" data-i18n="btn_lang_en">English 🇬🇧</button>
+      </div>
+    </header>
+
+    <main id="steps" tabindex="-1">
+      <!-- LANG SELECT -->
+      <section id="langSelect" class="step is-active" role="region" aria-labelledby="lang-title">
+        <h2 id="lang-title" class="step-title" data-i18n="lang_select_title">Seleziona la lingua / Select language</h2>
+        <div class="buttons-center">
+          <button type="button" class="btn" onclick="setLanguage('it')" data-i18n="btn_lang_it" data-next>Italiano 🇮🇹</button>
+          <button type="button" class="btn" onclick="setLanguage('en')" data-i18n="btn_lang_en"data-next>English 🇬🇧</button>
+        </div>
+      </section>
+
+      <!-- STEP 1 (Benvenuto) -->
+      <section id="step1" class="step" role="region" aria-labelledby="step1-title">
+        <h2 id="step1-title" class="visually-hidden" data-i18n="welcome_title">Benvenuto</h2>
+
+        <div class="image-links">
+          <a href="images/step 1 .png" target="_blank" rel="noopener">
+            <img src="images/step 1 .png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>    
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step1_main" data-i18n="btn_next">AVANTI</button>
+        </div>
+        <!-- Nuovo: tasto Indietro per tornare alla selezione lingua -->
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 1 MAIN -->
+      <section id="step1_main" class="step" role="region" aria-labelledby="step1_main-title">
+        <h2 id="step1_main-title" class="step-title" data-i18n="step1_title">POS</h2>
+        <p data-i18n="step1_intro"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2" data-i18n="btn_pos_not_working">POS non funziona</button>
+          <button type="button" class="btn" data-next="step3" data-i18n="btn_pos_integrated">POS in modalità integrata</button>
+          <button type="button" class="btn" data-next="step4" data-i18n="btn_install_new_pos">installazione nuovo POS</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2 -->
+      <section id="step2" class="step" role="region" aria-labelledby="step2-title">
+        <h2 id="step2-title" class="step-title" data-i18n="step2_title">Step 2</h2>
+        <p data-i18n="step2_intro"></p>
+        <p data-i18n="step2_q"></p>
+
+        <div class="image-links">
+          <a href="images/Step 2.png" target="_blank" rel="noopener">
+            <img src="images/Step 2.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+            
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2_5" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_1" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-1 -->
+      <section id="step2_1" class="step" role="region" aria-labelledby="step2_1-title">
+        <h2 id="step2_1-title" class="step-title" data-i18n="step2_1_title">Step 2-1</h2>
+        <p data-i18n="step2_1_intro"></p>
+        <p data-i18n="step2_1_methods"></p>
+        <ul>
+          <li data-i18n="step2_1_li1"></li>
+          <li data-i18n="step2_1_li2"></li>
+        </ul>
+        <p data-i18n="step2_1_q"></p>
+        <div class="image-links">
+          <a href="images/step 2-1.png" target="_blank" rel="noopener">
+            <img src="images/step 2-1.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>    
+          <a href="images/step 2-1 (2).png" target="_blank" rel="noopener">
+            <img src="images/step 2-1 (2).png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>  
+        </div>
+
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2_5" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_2" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-2 -->
+      <section id="step2_2" class="step" role="region" aria-labelledby="step2_2-title">
+        <h2 id="step2_2-title" class="step-title" data-i18n="step2_2_title">Step 2-2</h2>
+        <p data-i18n="step2_2_intro"></p>
+        <p data-i18n="step2_2_q"></p>
+         <div class="image-links">
+          <a href="images/step 2-2.png" target="_blank" rel="noopener">
+            <img src="images/step 2-2.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>  
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2_9" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_3" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-3 -->
+      <section id="step2_3" class="step" role="region" aria-labelledby="step2_3-title">
+        <h2 id="step2_3-title" class="step-title" data-i18n="step2_3_title">Step 2-3</h2>
+        <p data-i18n="step2_3_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_3" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_4" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-4 -->
+      <section id="step2_4" class="step" role="region" aria-labelledby="step2_4-title">
+        <h2 id="step2_4-title" class="step-title" data-i18n="step2_4_title">Step 2-4</h2>
+        <p data-i18n="step2_4_intro"></p>
+        <ul>
+          <li data-i18n="step2_4_cat">Categoria ; > IN STORE TECH > SW > CIAO Optical > CIAO - POS Worldline (Connection/Configuration)</li>
+        </ul>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 2-5 -->
+      <section id="step2_5" class="step" role="region" aria-labelledby="step2_5-title">
+        <h2 id="step2_5-title" class="step-title" data-i18n="step2_5_title">Step 2-5</h2>
+        <p data-i18n="step2_5_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2_8" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_6" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-6 -->
+      <section id="step2_6" class="step" role="region" aria-labelledby="step2_6-title">
+        <h2 id="step2_6-title" class="step-title" data-i18n="step2_6_title">Step 2-6</h2>
+        <p data-i18n="step2_6_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2_1_1" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_7" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-7 -->
+      <section id="step2_7" class="step" role="region" aria-labelledby="step2_7-title">
+        <h2 id="step2_7-title" class="step-title" data-i18n="step2_7_title">Step 2-7</h2>
+        <p data-i18n="step2_7_intro"></p>
+        <ul>
+          <li data-i18n="step2_7_cat">Categoria ; > INFRASTRUCTURE > CONNECTIVITY > PRIVATE LINE/MPLS/INTERNET ACCES/4G/LTE > ROUTER</li>
+        </ul>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 2-8 -->
+      <section id="step2_8" class="step" role="region" aria-labelledby="step2_8-title">
+        <h2 id="step2_8-title" class="step-title" data-i18n="step2_8_title">Step 2-8</h2>
+        <p data-i18n="step2_8_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step2_1_1" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_9" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 2-9 -->
+      <section id="step2_9" class="step" role="region" aria-labelledby="step2_9-title">
+        <h2 id="step2_9-title" class="step-title" data-i18n="step2_9_title">Step 2-9</h2>
+        <p data-i18n="step2_9_intro"></p>
+        <ul>
+          <li data-i18n="step2_9_cat">Categoria ; > IN STORE TECH > SW > CIAO Optical > CIAO - POS Worldline (Connection/Configuration)</li>
+        </ul>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 2-1-1 -->
+      <section id="step2_1_1" class="step" role="region" aria-labelledby="step2_1_1-title">
+        <h2 id="step2_1_1-title" class="step-title" data-i18n="step2_1_1_title">Step 2-1-1</h2>
+        <p data-i18n="step2_1_1_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step2_9" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3 -->
+      <section id="step3" class="step" role="region" aria-labelledby="step3-title">
+        <h2 id="step3-title" class="step-title" data-i18n="step3_title">Step 3</h2>
+        <p data-i18n="step3_q"></p>
+        <div class="image-links">
+          <a href="images/step 3.png" target="_blank" rel="noopener">
+            <img src="images/step 3.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+          <a href="images/step 3 (2).png" target="_blank" rel="noopener">
+            <img src="images/step 3 (2).png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>  
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_1" data-i18n="btn_error1">Impossibile connettersi a EFTLink.</button>
+          <button type="button" class="btn" data-next="step3_1" data-i18n="btn_error2">The Carta Di Credito could not be electronically authorized.</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-1 -->
+      <section id="step3_1" class="step" role="region" aria-labelledby="step3_1-title">
+        <h2 id="step3_1-title" class="step-title" data-i18n="step3_1_title">Step 3-1</h2>
+        <p data-i18n="step3_1_intro"></p>
+        <p data-i18n="step3_1_note"></p>
+        <p data-i18n="step3_1_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step3_2" data-i18n="no">No</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-2 -->
+      <section id="step3_2" class="step" role="region" aria-labelledby="step3_2-title">
+        <h2 id="step3_2-title" class="step-title" data-i18n="step3_2_title">Step 3-2</h2>
+        <p data-i18n="step3_2_intro"></p>
+        <ul>
+          <li data-i18n="step3_2_cat">CATEGORIA: IN STORE TECH > SW > CIAO Optical > Xstore - Payments / Deposits</li>
+        </ul>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 3-3 -->
+      <section id="step3_3" class="step" role="region" aria-labelledby="step3_3-title">
+        <h2 id="step3_3-title" class="step-title" data-i18n="step3_3_title">Step 3-3</h2>
+        <p data-i18n="step3_3_intro"></p>
+        <p data-i18n="step3_3_ps"></p>
+        <p data-i18n="step3_3_tools"></p>
+        <div class="image-links">
+          <a href="images/step 3-3.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+          
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3_1" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-3-1 -->
+      <section id="step3_3_1" class="step" role="region" aria-labelledby="step3_3_1-title">
+        <h2 id="step3_3_1-title" class="step-title" data-i18n="step3_3_1_title">Step 3-3-1</h2>
+        <p data-i18n="step3_3_1_intro"></p>
+
+        <div class="image-links">
+          <a href="images/step 3-3-1.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3-1.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3_2" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-3-2 -->
+      <section id="step3_3_2" class="step" role="region" aria-labelledby="step3_3_2-title">
+        <h2 id="step3_3_2-title" class="step-title" data-i18n="step3_3_2_title">Step 3-3-2</h2>
+        <p data-i18n="step3_3_2_intro"></p>
+        <div class="image-links">
+          <a href="images/step 3-3-2.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3-2.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3_3" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-3-3 -->
+      <section id="step3_3_3" class="step" role="region" aria-labelledby="step3_3_3-title">
+        <h2 id="step3_3_3-title" class="step-title" data-i18n="step3_3_3_title">Step 3-3-3</h2>
+        <p data-i18n="step3_3_3_intro"></p>
+        <div class="image-links">
+          <a href="images/step 3-3-3.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3-3.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3_4" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-3-4 -->
+      <section id="step3_3_4" class="step" role="region" aria-labelledby="step3_3_4-title">
+        <h2 id="step3_3_4-title" class="step-title" data-i18n="step3_3_4_title">Step 3-3-4</h2>
+        <p data-i18n="step3_3_4_intro"></p>
+
+        <div class="image-links">
+          <a href="images/step 3-3-4.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3-4.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3_5" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-3-5 -->
+      <section id="step3_3_5" class="step" role="region" aria-labelledby="step3_3_5-title">
+        <h2 id="step3_3_5-title" class="step-title" data-i18n="step3_3_5_title">Step 3-3-5</h2>
+        <p data-i18n="step3_3_5_intro"></p>
+        <div class="image-links">
+          <a href="images/step 3-3-5.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3-5.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_3_6" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-3-6 -->
+      <section id="step3_3_6" class="step" role="region" aria-labelledby="step3_3_6-title">
+        <h2 id="step3_3_6-title" class="step-title" data-i18n="step3_3_6_title">Step 3-3-6</h2>
+        <p data-i18n="step3_3_6_intro"></p>
+        <div class="image-links">
+          <a href="images/step 3-3-6.png" target="_blank" rel="noopener">
+            <img src="images/step 3-3-6.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_4_1" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-4-1 -->
+      <section id="step3_4_1" class="step" role="region" aria-labelledby="step3_4_1-title">
+        <h2 id="step3_4_1-title" class="step-title" data-i18n="step3_4_1_title">Step 3-4-1</h2>
+        <p data-i18n="step3_4_1_title_text"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_4_2" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-4-2 -->
+      <section id="step3_4_2" class="step" role="region" aria-labelledby="step3_4_2-title">
+        <h2 id="step3_4_2-title" class="step-title" data-i18n="step3_4_2_title">Step 3-4-2</h2>
+        <p data-i18n="step3_4_2_intro"></p>
+        <p data-i18n="step3_4_2_select"></p>
+        <p data-i18n="step3_4_2_protocol"></p>
+        <p data-i18n="step3_4_2_confirm"></p>
+        <p data-i18n="step3_4_2_line"></p>
+        <p data-i18n="step3_4_2_enter"></p>
+        <p data-i18n="step3_4_2_final"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_4_3" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-4-3 -->
+      <section id="step3_4_3" class="step" role="region" aria-labelledby="step3_4_3-title">
+        <h2 id="step3_4_3-title" class="step-title" data-i18n="step3_4_3_title">Step 3-4-3</h2>
+        <p data-i18n="step3_4_3_intro"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_4_4" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-4-4 -->
+      <section id="step3_4_4" class="step" role="region" aria-labelledby="step3_4_4-title">
+        <h2 id="step3_4_4-title" class="step-title" data-i18n="step3_4_4_title">Step 3-4-4</h2>
+        <p data-i18n="step3_4_4_intro"></p>
+        <ul>
+          <li data-i18n="step3_4_4_li1"></li>
+          <li data-i18n="step3_4_4_li2"></li>
+          <li data-i18n="step3_4_4_li3"></li>
+          <li data-i18n="step3_4_4_li4"></li>
+          <li data-i18n="step3_4_4_li5"></li>
+        </ul>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_4_5" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-4-5 -->
+      <section id="step3_4_5" class="step" role="region" aria-labelledby="step3_4_5-title">
+        <h2 id="step3_4_5-title" class="step-title" data-i18n="step3_4_5_title">Step 3-4-5</h2>
+        <p data-i18n="step3_4_5_intro"></p>
+        <p data-i18n="step3_4_5_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_4_6" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step3_4_7" data-i18n="no">NO</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 3-4-6 -->
+      <section id="step3_4_6" class="step" role="region" aria-labelledby="step3_4_6-title">
+        <h2 id="step3_4_6-title" class="step-title" data-i18n="step3_4_6_title">Step 3-4-6</h2>
+        <p data-i18n="step3_4_6_intro"></p>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 3-4-7 -->
+      <section id="step3_4_7" class="step" role="region" aria-labelledby="step3_4_7-title">
+        <h2 id="step3_4_7-title" class="step-title" data-i18n="step3_4_7_title">Step 3-4-7</h2>
+        <p data-i18n="step3_4_7_intro"></p>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section id="step4" class="step" role="region" aria-labelledby="step4-title">
+        <h2 id="step4-title" class="step-title" data-i18n="step4_title">Step 4</h2>
+        <p data-i18n="step4_intro"></p>
+        <div class="image-links">
+          <a href="images/step 4.png" target="_blank" rel="noopener">
+            <img src="images/step 4.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+          <a href="images/step 4 (2).png" target="_blank" rel="noopener">
+            <img src="images/step 4 (2).png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>  
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_1" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-1 -->
+      <section id="step4_1" class="step" role="region" aria-labelledby="step4_1-title">
+        <h2 id="step4_1-title" class="step-title" data-i18n="step4_1_title">Step 4-1</h2>
+        <p data-i18n="step4_1_intro"></p>
+        <p data-i18n="step4_1_q"></p>
+
+        <div class="image-links">
+          <a href="images/step 4-1.png" target="_blank" rel="noopener">
+            <img src="images/step 4-1.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+
+        <div class="buttons-center">
+          
+            
+          <button type="button" class="btn" data-next="step4_2" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step4_3" data-i18n="no">NO</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-2 -->
+      <section id="step4_2" class="step" role="region" aria-labelledby="step4_2-title">
+        <h2 id="step4_2-title" class="step-title" data-i18n="step4_2_title">Step 4-2</h2>
+        <p data-i18n="step4_2_intro"></p>
+        <p data-i18n="step4_2_mac"></p>
+        <ul>
+          <li data-i18n="step4_2_cat">Categoria: APPLICATION > CIAO OPTICAL > SW > CIAO – POS WORLDLINE (CONNECTION/CONFIGURATION)</li>
+        </ul>
+        <div class="bottom-actions">
+          <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">indietro</button>
+          <button type="button" class="btn" data-copy data-i18n="btn_copy">COPIA CRONOLOGIA</button>
+        </div>
+      </section>
+
+      <!-- STEP 4-3 -->
+      <section id="step4_3" class="step" role="region" aria-labelledby="step4_3-title">
+        <h2 id="step4_3-title" class="step-title" data-i18n="step4_3_title">Step 4-3</h2>
+        <p data-i18n="step4_3_intro"></p>
+        <div class="image-links">
+          <a href="images/step 4-3.png" target="_blank" rel="noopener">
+            <img src="images/step 4-3.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_4" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-4 -->
+      <section id="step4_4" class="step" role="region" aria-labelledby="step4_4-title">
+        <h2 id="step4_4-title" class="step-title" data-i18n="step4_4_title">Step 4-4</h2>
+        <p data-i18n="step4_4_intro"></p>
+        <ul>
+          <li data-i18n="step4_4_li1">Device Status: ACTIVE</li>
+          <li data-i18n="step4_4_li2">Device Type: EFT LINK CC</li>
+          <li data-i18n="step4_4_li3">Asset Tag: Bisogna procedere in questo Modo</li>
+          
+          <li style="list-style-type: none;">
+            <ul style="list-style-type: circle; margin-left: 20px; margin-top: 5px; margin-bottom: 10px;">
+              <li data-i18n="step4_4_li4">Generalmente tutti i POS bancari vengono inseriti nel range P050–P059.</li>
+              <li data-i18n="step4_4_li5">Brand S&V: svCODICESAPp05* … (es. sva123p050)</li>
+              <li data-i18n="step4_4_li6">Brand GV: gvCODICESAPp05* … (es. gva123p050)</li>
+              <li data-i18n="step4_4_li7">Brand SGH: sghCODICESAPp05* … (es. sgha123p050)</li>
+              <li data-i18n="step4_4_li8">Brand SOLARIS: solCODICESAPp05* … (es. sola123p050)</li>
+            </ul>
+          </li>
+          <li data-i18n="step4_4_li9">Confirm Asset Tag: Replicare esattamente quanto inserito nel campo precedente.</li>
+          <li data-i18n="step4_4_li10">MAC Address: Inserire il MAC Address del dispositivo.</li>
+          <li data-i18n="step4_4_li11">Wired or Wireless Device: WIRELESS</li>
+          <li data-i18n="step4_4_li12">VLAN: Lasciare impostata la VLAN presentata.</li>
+          <li data-i18n="step4_4_li13">IP Address: Compilato automaticamente.</li>
+        </ul>
+        <p data-i18n="step4_4_confirm"></p>
+
+        <div class="image-links">
+          <a href="images/step 4-4.png" target="_blank" rel="noopener">
+            <img src="images/step 4-4.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_5" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-5 -->
+      <section id="step4_5" class="step" role="region" aria-labelledby="step4_5-title">
+        <h2 id="step4_5-title" class="step-title" data-i18n="step4_5_title">Step 4-5</h2>
+        <p data-i18n="step4_5_intro"></p>
+        <p data-i18n="step4_5_q"></p>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_6" data-i18n="yes">SI</button>
+          <button type="button" class="btn" data-next="step4_2" data-i18n="no">NO</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-6 -->
+      <section id="step4_6" class="step" role="region" aria-labelledby="step4_6-title">
+        <h2 id="step4_6-title" class="step-title" data-i18n="step4_6_title">Step 4-6</h2>
+        <p data-i18n="step4_6_intro"></p>
+        <div class="image-links">
+          <a href="images/step 4-6.png" target="_blank" rel="noopener">
+            <img src="images/step 4-6.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+           <a href="images/step 4-6 (2).png" target="_blank" rel="noopener">
+            <img src="images/step 4-6 (2).png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a>  
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_7" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-7 -->
+      <section id="step4_7" class="step" role="region" aria-labelledby="step4_7-title">
+        <h2 id="step4_7-title" class="step-title" data-i18n="step4_7_title">Step 4-7</h2>
+        <p data-i18n="step4_7_intro"></p>
+        <p data-i18n="step4_7_q"></p>
+        <div class="image-links">
+          <a href="images/step 4-7.png" target="_blank" rel="noopener">
+            <img src="images/step 4-7.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+             
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step4_7_1" data-i18n="btn_one_pos">UN SOLO DISPOSITIVO</button>
+          <button type="button" class="btn" data-next="step4_7_2" data-i18n="btn_multiple_pos">DUE O PIÚ DISPOSITIVI</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-7-1 -->
+      <section id="step4_7_1" class="step" role="region" aria-labelledby="step4_7_1-title">
+        <h2 id="step4_7_1-title" class="step-title" data-i18n="step4_7_1_title">Step 4-7-1</h2>
+        <p data-i18n="step4_7_1_intro"></p>
+        <p data-i18n="step4_7_1_note"></p>
+        <div class="image-links">
+          <a href="images/step 4-7-1.png" target="_blank" rel="noopener">
+            <img src="images/step 4-7-1.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+             
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_1" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+      <!-- STEP 4-7-2 -->
+      <section id="step4_7_2" class="step" role="region" aria-labelledby="step4_7_2-title">
+        <h2 id="step4_7_2-title" class="step-title" data-i18n="step4_7_2_title">Step 4-7-2</h2>
+        <p data-i18n="step4_7_2_intro"></p>
+        <div class="image-links">
+          <a href="images/step 4-7-2.png" target="_blank" rel="noopener">
+            <img src="images/step 4-7-2.png" class="help-image" alt="Esempio POS" data-i18n="alt_pos" data-i18n-attr="alt"/>
+          </a> 
+             
+        </div>
+        <div class="buttons-center">
+          <button type="button" class="btn" data-next="step3_1" data-i18n="btn_next">Avanti</button>
+        </div>
+        <button type="button" class="btn-secondary back" data-back data-i18n="btn_back">⬅ Indietro</button>
+      </section>
+
+    </main>
+
+    <!-- Modale per ingrandimento immagini -->
+    <div id="imageModal" class="modal" onclick="closeModal()">
+      <img class="modal-content" id="imgFull" alt="Ingrandimento" onclick="event.stopPropagation()">
+    </div>
+  </div>
+
+  <script>
+/* ===========================
+ Dizionario IT / EN
+ =========================== */
+const translations = {
+      it: {
+        app_title: "Troubleshooting POS",
+        alt_dxc_logo: "Logo DXC",
+        lang_select_title: "Seleziona la lingua / Select language",
+        btn_lang_it: "Italiano 🇮🇹",
+        btn_lang_en: "English 🇬🇧",
+        welcome_title: "Welcome",
+
+        alt_pos: "Esempio POS",
+
+        btn_next: "AVANTI",
+        btn_back: "⬅ Indietro",
+        btn_copy: "COPIA CRONOLOGIA",
+        yes: "SI",
+        no: "NO",
+
+        copy_success: "Troubleshooting copiato negli appunti!",
+        copy_error: "Impossibile copiare negli appunti su questo browser.",
+
+        // Step 1
+        step1_title: "POS",
+        step1_intro: "Lo store ci ha contattati per segnalare un problema con il POS.",
+        btn_pos_not_working: "POS non funziona",
+        btn_pos_integrated: "POS in modalità integrata",
+        btn_install_new_pos: "installazione nuovo POS",
+
+        // Step 2
+
+
+        step2_title: "Verifica raggiungibilità",
+        step2_intro: "Accedere al Personality Server e verificare se il POS (\"EFTLink cc\" nel Personality Server) è raggiungibile tramite ping.",
+        step2_intro_en: "Access the Personality Server and verify whether the POS (\"EFTLink cc\" in the Personality Server) is reachable via ping.",
+        step2_q: "Il POS risulta pingabile?",
+        step2_q_en: "Is the POS reachable?",
+
+        // Step 2-1
+        step2_1_title: "Verifica MAC Address",
+        step2_1_intro: "Richiedere allo store il MAC address del POS e confrontarlo con quello presente nel Personality Server.",
+        step2_1_methods: "Modalità per individuare il MAC address:",
+        step2_1_li1: "Verificare il retro del dispositivo.",
+        step2_1_li2: "In alternativa, accedere alla lista delle reti Wi‑Fi, quindi selezionare l’icona delle impostazioni (rotella) in alto a destra e accedere alla sezione Avanzate.",
+        step2_1_q: "Il MAC address corrisponde a quello presente nel Personality Server?",
+
+        // Step 2-2
+        step2_2_title: "Ricerca MAC in PS",
+        step2_2_intro: "Effettuare la ricerca del MAC address fornito nel Personality Server.",
+        step2_2_intro_en: "Search for the provided MAC address in the Personality Server.",
+        step2_2_q: "Il MAC address risulta associato a un altro store?",
+        step2_2_q_en: "Is the MAC address associated with another store?",
+
+        // Step 2-3
+        step2_3_title: "Nuova Installazione",
+        step2_3_q: "lo store intende installare un nuovo POS?",
+        step2_3_q_en: "Does the store intend to install a new POS?",
+
+        // Step 2-4
+        step2_4_title: "Supporto Fornitore",
+        step2_4_intro: "Risolvere il ticket e chiedere allo store di contattare l'assistenza del POS al numero",
+        step2_4_intro_en: "Resolve the ticket and ask the store to contact POS support at the number",
+        step2_4_cat: "Categoria ; > IN STORE TECH > SW > CIAO Optical > CIAO - POS Worldline (Connection/Configuration)",
+
+        // Step 2-5
+        step2_5_title: "Segnale Wi-Fi",
+        step2_5_q: "il POS rileva la rete WIFI_STORE_EMEA?",
+        step2_5_q_en: "Does the POS detect the Wi‑Fi network WIFI_STORE_EMEA?",
+
+        // Step 2-6
+        step2_6_title: "Verifica Rete",
+        step2_6_q: "LA rete Wifi \"WIFI_STORE_EMEA\" non viene rilevata da nessun dispositivo dentro lo store?",
+        step2_6_q_en: "Is the Wi‑Fi network \"WIFI_STORE_EMEA\" not detected by any device inside the store?",
+
+        // Step 2-7
+        step2_7_title: "Escalation Network",
+        step2_7_intro: "Aprire un ticket e assegnarlo a LUX_DXC EMEA_L2_NETWORK indicando che nessun dispositivo riesce a trovare la rete wifi \"WIFI_STORE_EMEA\" e che si richiede una verifica sul'access point",
+        step2_7_intro_en: "Open a ticket and assign it to LUX_DXC EMEA_L2_NETWORK, specifying that no devices are able to detect the Wi‑Fi network \"WIFI_STORE_EMEA\" and requesting a check on the access point.",
+        step2_7_cat: "Categoria ; > INFRASTRUCTURE > CONNECTIVITY > PRIVATE LINE/MPLS/INTERNET ACCES/4G/LTE > ROUTER",
+
+        // Step 2-8
+        step2_8_title: "Credenziali Wi-Fi",
+        step2_8_q: "lo store ha la password del Wifi \"WIFI_STORE_EMEA\" e la sta inserendo correttamente",
+        step2_8_q_en: "Does the store have the Wi‑Fi password for \"WIFI_STORE_EMEA\" and is it being entered correctly?",
+
+        // Step 2-9
+        step2_9_title: "Escalation Team Locale",
+        step2_9_intro: "assegnare il ticket a \"ITALY - LOCAL IT TEAM\"",
+        step2_9_intro_en: "Assign the ticket to \"ITALY - LOCAL IT TEAM\"",
+        step2_9_cat: "Categoria ; > IN STORE TECH > SW > CIAO Optical > CIAO - POS Worldline (Connection/Configuration)",
+
+        // Step 2-1-1
+        step2_1_1_title: "Modalità Operativa",
+        step2_1_1_q: "LO store vuole che il POS sia configurato in modalità integrata? (non inserimento manuale)",
+        step2_1_1_q_en: "Does the store want the POS to be configured in integrated mode? (no manual entry)",
+
+        // Step 3
+        step3_title: "Identificazione Errore",
+        step3_q: "qual è l'errore riscontrato dallo store?",
+        step3_q_en: "What error did the store encounter?",
+        btn_error1: "Impossibile connettersi a EFTLink.",
+        btn_error2: "The Carta Di Credito could not be electronically authorized.",
+
+        // Step 3-1
+        step3_1_title: "Chiusura Applicativo",
+        step3_1_intro: "Chiudere CIAO facendo clic sulla \"X\" da tutte le postazioni (CASSA, IGEL e iPad).",
+        step3_1_intro_en: "Close CIAO by clicking on the \"X\" button on all workstations (CASH DESK, IGEL, and iPad).",
+        step3_1_note: "Questa operazione deve essere effettuata alla chiusura del negozio al fine di evitare discrepanze.",
+        step3_1_note_en: "This operation must be performed at store closing in order to avoid discrepancies.",
+        step3_1_q: "Siamo in fase di chiusura del negozio?",
+        step3_1_q_en: "Is the store currently in the closing phase?",
+
+        // Step 3-2
+        step3_2_title: "Gestione Ticket",
+        step3_2_intro: "Impostare il ticket nello stato \"Waiting End User\" e invitare lo store a contattarci a fine giornata, oppure incaricare un altro collega di ricontattarlo prima della chiusura dello store.",
+        step3_2_intro_en: "Set the ticket to the status \"Waiting End User\" and ask the store to contact us at the end of the day, or assign another colleague to call the store back before store closing.",
+        step3_2_cat: "CATEGORIA: IN STORE TECH > SW > CIAO Optical > Xstore - Payments / Deposits",
+
+        // Step 3-3
+        step3_3_title: "Riavvio Servizi",
+        step3_3_intro: "Chiudere CIAO (cliccando sulla \"X\") da tutte le postazioni (CASSA, IGEL e IPAD).",
+        step3_3_intro_en: "Close CIAO by clicking on the \"X\" button on all workstations (Cash Desk, IGEL, and iPad).",
+        step3_3_ps: "Accedere su PERSONALITY SERVER e ricercare per codice SAP del negozio.",
+        step3_3_ps_en: "Access the Personality Server and search using the store SAP code.",
+        step3_3_tools: "Selezionare la voce TOOLS dalla VM POS.",
+        step3_3_tools_en: "From the POS virtual machine, select the option \"TOOLS\".",
+
+        // Step 3-3-1
+        step3_3_1_title: "Refresh Proprietà",
+        step3_3_1_intro: "Ricercare il comando \"xstore – Refresh Global Properties\" ed eseguirlo selezionando \"Run This Command\"",
+        step3_3_1_intro_en: "Search for the command \"xstore – Refresh Global Properties\" and execute it by selecting \"Run This Command\".",
+
+        // Step 3-3-2
+        step3_3_2_title: "Riconfigurazione XStore",
+        step3_3_2_intro: "Ricercare il comando \"xstore – Reconfigure\" ed eseguirlo selezionando \"Run This Command\".",
+        step3_3_2_intro_en: "Search for the command \"xstore – Reconfigure\" and execute it by selecting \"Run This Command\".",
+
+        // Step 3-3-3
+        step3_3_3_title: "Strumenti POSMOB",
+        step3_3_3_intro: "Successivamente, spostarsi sulla macchina virtuale POSMOB e selezionare la voce \"TOOLS\".",
+        step3_3_3_intro_en: "Next, switch to the POSMOB virtual machine and select the \"TOOLS\" option.",
+
+        // Step 3-3-4
+        step3_3_4_title: "Refresh POSMOB",
+        step3_3_4_intro: "Ricercare il comando \"xstore – Refresh Global Properties\" ed eseguirlo selezionando \"Run This Command\"",
+        step3_3_4_intro_en: "Search for the command \"xstore – Refresh Global Properties\" and execute it by selecting \"Run This Command\".",
+
+        // Step 3-3-5
+        step3_3_5_title: "Riconfigurazione POSMOB",
+        step3_3_5_intro: "Ricercare il comando \"xstore – Reconfigure\" ed eseguirlo selezionando \"Run This Command\".",
+        step3_3_5_intro_en: "Search for the command \"xstore – Reconfigure\" and execute it by selecting \"Run This Command\".",
+
+        // Step 3-3-6
+        step3_3_6_title: "Riavvio EFT Link",
+        step3_3_6_intro: "Ricercare il comando \"EFT Link Service Restart\" ed eseguirlo selezionando \"Run This Command\".",
+        step3_3_6_intro_en: "Search for the command \"EFT Link Service Restart\" and execute it by selecting \"Run This Command\".",
+
+        // Step 3-4-1
+        step3_4_1_title: "Configurazione ECR",
+        step3_4_1_title_text: "Configurazione dell’ECR sul POS",
+        step3_4_1_title_text_en: "ECR Configuration on the POS",
+
+        // Step 3-4-2
+        step3_4_2_title: "Configurazione PAX TOOLS",
+        step3_4_2_intro: "Accedere all’app PAX TOOLS e inserire la password: 06306.",
+        step3_4_2_intro_en: "Access the PAX TOOLS application and enter the password: 06306.",
+        step3_4_2_select: "Selezionare \"Configura ECR\" e verificare che \"Abilita ECR\" sia impostato su ATTIVO.In caso contrario, selezionare l’opzione e modificarla.",
+        step3_4_2_select_en: "Select \"Configure ECR\" and ensure that \"Enable ECR\" is set to ON.If not, tap the option and modify it accordingly.",
+        step3_4_2_protocol: "Verificare che il \"Protocollo ECR 17\" sia impostato.",
+        step3_4_2_protocol_en: "Verify that \"ECR Protocol 17\" is configured.",
+        step3_4_2_confirm: "Fare clic su \"Conferma\" in basso per accedere al menu ECR 17.",
+        step3_4_2_confirm_en: "Tap \"Confirm\" at the bottom to access the ECR 17 menu.",
+        step3_4_2_line: "Accedere a \"Configura la linea\" e verificare che la Porta Terminale sia impostata su 2000.",
+        step3_4_2_line_en: "Open \"Configure Line\" and ensure that the Terminal Port is set to 2000.",
+        step3_4_2_enter: "Se necessario, selezionare il campo e digitare \"2000\".",
+        step3_4_2_enter_en: "If required, tap the field and enter \"2000\".",
+        step3_4_2_final: "Confermare le impostazioni ed uscire dal menu.",
+        step3_4_2_final_en: "Confirm the configuration and exit the menu.",
+
+        // Step 3-4-3
+        step3_4_3_title: "Opzione Cassa",
+        step3_4_3_intro: "Disabilitare l’opzione \"Importo obbligatorio da cassa\".",
+        step3_4_3_intro_en: "Disable the option \"Mandatory Amount from Cash Desk\".",
+
+        // Step 3-4-4
+        step3_4_4_title: "Verifica Configurazione",
+        step3_4_4_intro: "Una volta abilitato il POS all’ECR (con Protocollo ECR 17), è necessario verificare che l’opzione \"Importo obbligatorio da cassa\" sia disattivata seguendo la procedura riportata di seguito:",
+        step3_4_4_intro_en: "Once the POS is enabled for ECR (with ECR Protocol 17), it is necessary to verify that the option \"Mandatory Amount from Cash Desk\" is disabled by following the procedure below:",
+        step3_4_4_li1: "Accedere all’app PAX TOOLS (come indicato nel paragrafo 2).",
+        step3_4_4_li1_en: "Access the PAX TOOLS application (as described in section 2).",
+        step3_4_4_li2: "Selezionare Configura ECR.",
+        step3_4_4_li2_en: "Select Configure ECR.",
+        step3_4_4_li3: "Fare clic su Conferma in basso per accedere al menu ECR 17.",
+        step3_4_4_li3_en: "Tap Confirm at the bottom to access the ECR 17 menu.",
+        step3_4_4_li4: "Selezionare Altre Impostazioni (o Altre Opzioni).",
+        step3_4_4_li4_en: "Select Other Settings (or Other Options).",
+        step3_4_4_li5: "Disattivare Importo obbligatorio da cassa e confermare le modifiche prima di uscire dal menu.",
+        step3_4_4_li5_en: "Disable Mandatory Amount from Cash Desk, then confirm the changes before exiting the menu.",
+
+        // Step 3-4-5
+        step3_4_5_title: "Test di Vendita",
+        step3_4_5_intro: "Invitare lo store a effettuare una simulazione di vendita rapida e verificare se il pagamento in modalità integrata funziona correttamente.",
+        step3_4_5_intro_en: "Ask the store to perform a quick sales simulation and check whether the integrated payment method works correctly.",
+        step3_4_5_q: "Il pagamento in modalità integrata funziona?",
+        step3_4_5_q_en: "Does the integrated payment method work?",
+
+        // Step 3-4-6
+        step3_4_6_title: "Chiusura Ticket",
+        step3_4_6_intro: "RISOLVERE IL TICKET INSERENDO LA CATEGORIA:IN STORE TECH > SW > CIAO Optical > Xstore - Payments / Deposits",
+        step3_4_6_intro_en: "Resolve the ticket by selecting the following category:In Store Tech > SW > CIAO Optical > Xstore – Payments / Deposits",
+
+        // Step 3-4-7
+        step3_4_7_title: "Escalation L3",
+        step3_4_7_intro: "Aprire un ticket e assegnarlo a \"SSS North America - POS Triage - 3rd Level Support\"",
+        step3_4_7_intro_en: "Open a ticket and assign it to \"SSS North America – POS Triage – 3rd Level Support.\"",
+
+        // Step 4
+        step4_title: "Individuazione MAC",
+        step4_intro: "Sul retro del dispositivo, individuare il \"Wi‑Fi MAC\" In alternativa, accedendo alla lista delle reti Wi‑Fi, selezionare l’icona delle impostazioni (rotella) in alto a destra e infine cercare Avanzate.",
+        step4_intro_en: "On the back of the device, locate the \"Wi‑Fi MAC\"",
+
+        // Step 4-1
+        step4_1_title: "Ricerca MAC",
+        step4_1_intro: "Nella homepage principale del Personality Server, inserire il MAC Address nel campo dedicato per verificare se si trova nel Depot oppure se è associato a un altro store.",
+        step4_1_intro_en: "On the main homepage of the Personality Server, enter the MAC Address in the dedicated field to check whether it is located in the Depot or associated with another store.",
+        step4_1_q: "Il MAC Address è associato a un altro store o al Depot?",
+        step4_1_q_en: "Is the MAC Address associated with another store or with the Depot?",
+
+        // Step 4-2
+        step4_2_title: "Escalation Team Locale",
+        step4_2_intro: "Escalare il caso al Local Italy – Local IT Team.",
+        step4_2_intro_en: "Escalate the case to the Local Italy – Local IT Team.",
+        step4_2_mac: "Il codice del MAC Address",
+        step4_2_mac_en: "The MAC Address code",
+        step4_2_cat: "Categoria: APPLICATION > CIAO OPTICAL > SW > CIAO – POS WORLDLINE (CONNECTION/CONFIGURATION)",
+
+        // Step 4-3
+        step4_3_title: "Configurazione VLAN",
+        step4_3_intro: "Accedere quindi alla pagina dello store per il quale si desidera effettuare l’associazione. Il POS Worldline dovrà essere inserito all’interno della VLAN 1 – Wireless.",
+        step4_3_intro_en: "Therefore, access the store page for which the association is required. The Worldline POS must be added to VLAN 1 – Wireless.",
+
+        // Step 4-4
+        step4_4_title: "Aggiunta Dispositivo",
+        step4_4_intro: "Dopo aver selezionato ADD DEVICE, procedere con la compilazione dei campi come indicato di seguito:",
+        step4_4_intro_en: "After selecting ADD DEVICE, proceed by completing the fields as described below:",
+        step4_4_li1: "Device Status: ACTIVE",
+        step4_4_li2: "Device Type: EFT LINK CC",
+        step4_4_li3: "Asset Tag: Bisogna procedere in questo Modo",
+        step4_4_li4: "Generalmente tutti i POS bancari vengono inseriti nel range P050–P059.",
+        step4_4_li5: "Brand S&V: svCODICESAPp05* … (es. sva123p050)",
+        step4_4_li6: "Brand GV: gvCODICESAPp05* … (es. gva123p050)",
+        step4_4_li7: "Brand SGH: sghCODICESAPp05* … (es. sgha123p050)",
+        step4_4_li8: "Brand SOLARIS: solCODICESAPp05* … (es. sola123p050)",
+        step4_4_li9: "Confirm Asset Tag: Replicare esattamente quanto inserito nel campo precedente.",
+        step4_4_li10: "MAC Address: Inserire il MAC Address del dispositivo.",
+        step4_4_li11: "Wired or Wireless Device: WIRELESS",
+        step4_4_li12: "VLAN: Lasciare impostata la VLAN presentata.",
+        step4_4_li13: "IP Address: Compilato automaticamente.",
+        step4_4_confirm: "Confermare l’inserimento selezionando CREATE AND ASSIGN TO STORE.",
+
+        // Step 4-5
+        step4_5_title: "Connessione Wi-Fi",
+        step4_5_intro: "Successivamente, il dispositivo dovrà essere connesso alla rete WIFI_STORE_EMEA.",
+        step4_5_q: "Lo store è in possesso della password Wi‑Fi e la sta inserendo correttamente?",
+
+        // Step 4-6
+        step4_6_title: "Cambio Ruolo",
+        step4_6_intro: "Ricercare il dispositivo inserito e successivamente selezionare CHANGE ROLE per modificare il ruolo del POS sul Personality Server.",
+
+        // Step 4-7
+        step4_7_title: "Verifica Collegamenti",
+        step4_7_intro: "Come penultimo step dovremo andare a controllare i vari collegamenti (LINK) tra il/i Pos Worldline ai Vari Pc e Tablet su PERSONALITY SERVER.",
+        step4_7_q: "quanti POS ha lo store?",
+        btn_one_pos: "UN SOLO DISPOSITIVO",
+        btn_multiple_pos: "DUE O PIÚ DISPOSITIVI",
+
+        // Step 4-7-1
+        step4_7_1_title: "POS Singolo",
+        step4_7_1_intro: "Lo store dovrà collegare tutti gli IGEL presenti nello store.",
+        step4_7_1_note: "Al termine dell’operazione, ricordarsi di premere SAVE CHANGES a piè pagina e tornare alla schermata principale.",
+
+        // Step 4-7-2
+        step4_7_2_title: "POS Multipli",
+        step4_7_2_intro: "Se in un punto vendita sono presenti due o più dispositivi Worldline, non sarà necessaria alcuna associazione, in quanto XStore proporrà un pop‑up di selezione in fase di conclusione della vendita, nel quale verrà richiesto al collega di negozio di scegliere il dispositivo più comodo.",
+      },
+
+      en: {
+        app_title: "POS Troubleshooting",
+        alt_dxc_logo: "DXC Logo",
+        lang_select_title: "Select language / Seleziona la lingua",
+        btn_lang_it: "Italiano 🇮🇹",
+        btn_lang_en: "English 🇬🇧",
+        welcome_title: "Welcome",
+
+        alt_pos: "POS Example",
+
+        btn_next: "NEXT",
+        btn_back: "⬅ Back",
+        btn_copy: "Copy troubleshooting",
+        yes: "YES",
+        no: "NO",
+
+        copy_success: "Troubleshooting copied to clipboard!",
+        copy_error: "Unable to copy to clipboard in this browser.",
+
+        // Step 1
+        step1_title: "POS",
+        step1_intro: "The store contacted us to report an issue with the POS system.",
+        btn_pos_not_working: "POS not working",
+        btn_pos_integrated: "Integrated POS mode",
+        btn_install_new_pos: "Install new POS",
+
+        // Step 2
+        step2_title: "Reachability Check",
+        step2_intro: "Access the Personality Server and verify whether the POS (\"EFTLink cc\" in the Personality Server) is reachable via ping.",
+        step2_q: "Is the POS reachable?",
+
+        // Step 2-1
+        step2_1_title: "MAC Address Verification",
+        step2_1_intro: "Request the POS MAC address from the store and compare it with the one in the Personality Server.",
+        step2_1_methods: "Steps to find the MAC address:",
+        step2_1_li1: "Check the back of the device.",
+        step2_1_li2: "Alternatively, access the Wi‑Fi list, then select the Settings icon (gear) in the top-right corner and navigate to Advanced settings.",
+        step2_1_q: "Does the MAC address match the one listed in the Personality Server?",
+
+        // Step 2-2
+        step2_2_title: "PS MAC Search",
+        step2_2_intro: "Perform a search for the provided MAC address in the Personality Server.",
+        step2_2_q: "Is the MAC address associated with another store?",
+
+        // Step 2-3
+        step2_3_title: "New Installation",
+        step2_3_q: "Does the store intend to install a new POS?",
+
+        // Step 2-4
+        step2_4_title: "Vendor Support",
+        step2_4_intro: "Resolve the ticket and ask the store to contact POS support at the number",
+        step2_4_cat: "Category ; > IN STORE TECH > SW > CIAO Optical > CIAO - POS Worldline (Connection/Configuration)",
+
+        // Step 2-5
+        step2_5_title: "Wi-Fi Signal",
+        step2_5_q: "Does the POS detect the Wi‑Fi network WIFI_STORE_EMEA?",
+
+        // Step 2-6
+        step2_6_title: "Network Check",
+        step2_6_q: "Is the Wi‑Fi network \"WIFI_STORE_EMEA\" not detected by any device in the store?",
+
+        // Step 2-7
+        step2_7_title: "Network Escalation",
+        step2_7_intro: "Open a ticket and assign it to LUX_DXC EMEA_L2_NETWORK, specifying that no devices are able to detect the Wi‑Fi network \"WIFI_STORE_EMEA\" and requesting a check on the access point.",
+        step2_7_cat: "Category ; > INFRASTRUCTURE > CONNECTIVITY > PRIVATE LINE/MPLS/INTERNET ACCES/4G/LTE > ROUTER",
+
+        // Step 2-8
+        step2_8_title: "Wi-Fi Credentials",
+        step2_8_q: "Does the store have the Wi‑Fi password for \"WIFI_STORE_EMEA\" and is it entering it correctly?",
+
+        // Step 2-9
+        step2_9_title: "Local IT Escalation",
+        step2_9_intro: "Assign the ticket to \"ITALY - LOCAL IT TEAM\"",
+        step2_9_cat: "Category ; > IN STORE TECH > SW > CIAO Optical > CIAO - POS Worldline (Connection/Configuration)",
+
+        // Step 2-1-1
+        step2_1_1_title: "Operating Mode",
+        step2_1_1_q: "Does the store want the POS to be configured in integrated mode? (no manual entry)",
+
+        // Step 3
+        step3_title: "Error Identification",
+        step3_q: "What error did the store encounter?",
+        btn_error1: "Unable to connect to EFTLink.",
+        btn_error2: "The Carta Di Credito could not be electronically authorized.",
+
+        // Step 3-1
+        step3_1_title: "Application Close",
+        step3_1_intro: "Close CIAO by clicking on the \"X\" button on all workstations (CASH DESK, IGEL, and iPad).",
+        step3_1_note: "This operation must be performed at store closing in order to avoid discrepancies.",
+        step3_1_q: "Is the store currently in the closing phase?",
+
+        // Step 3-2
+        step3_2_title: "Ticket Management",
+        step3_2_intro: "Set the ticket to the status \"Waiting End User\" and ask the store to contact us at the end of the day, or assign another colleague to call the store back before store closing.",
+        step3_2_cat: "CATEGORY: IN STORE TECH > SW > CIAO Optical > Xstore - Payments / Deposits",
+
+        // Step 3-3
+        step3_3_title: "Service Restart",
+        step3_3_intro: "Close CIAO by clicking on the \"X\" button on all workstations (Cash Desk, IGEL, and iPad).",
+        step3_3_ps: "Access the Personality Server and search using the store SAP code.",
+        step3_3_tools: "From the POS virtual machine, select the option \"TOOLS\".",
+
+        // Step 3-3-1
+        step3_3_1_title: "Refresh Properties",
+        step3_3_1_intro: "Search for the command \"xstore – Refresh Global Properties\" and execute it by selecting \"Run This Command\".",
+        // Step 3-3-2
+        step3_3_2_title: "Reconfigure XStore",
+        step3_3_2_intro: "Search for the command \"xstore – Reconfigure\" and execute it by selecting \"Run This Command\".",
+        // Step 3-3-3
+        step3_3_3_title: "POSMOB Tools",
+        step3_3_3_intro: "Next, switch to the POSMOB virtual machine and select the \"TOOLS\" option.",
+        // Step 3-3-4
+        step3_3_4_title: "Refresh POSMOB",
+        step3_3_4_intro: "Search for the command \"xstore – Refresh Global Properties\" and execute it by selecting \"Run This Command\".",
+        // Step 3-3-5
+        step3_3_5_title: "Reconfigure POSMOB",
+        step3_3_5_intro: "Search for the command \"xstore – Reconfigure\" and execute it by selecting \"Run This Command\".",
+        // Step 3-3-6
+        step3_3_6_title: "EFT Link Restart",
+        step3_3_6_intro: "Search for the command \"EFT Link Service Restart\" and execute it by selecting \"Run This Command\".",
+        // Step 3-4-1
+        step3_4_1_title: "ECR Config",
+        step3_4_1_title_text: "ECR Configuration on the POS",
+        // Step 3-4-2
+        step3_4_2_title: "PAX TOOLS Config",
+        step3_4_2_intro: "Access the PAX TOOLS application and enter the password: 06306.",
+        step3_4_2_select: "Select \"Configure ECR\" and ensure that \"Enable ECR\" is set to ON. If not, tap the option and modify it accordingly.",
+        step3_4_2_protocol: "Verify that \"ECR Protocol 17\" is configured.",
+        step3_4_2_confirm: "Tap \"Confirm\" at the bottom to access the ECR 17 menu.",
+        step3_4_2_line: "Open \"Configure Line\" and ensure that the Terminal Port is set to 2000.",
+        step3_4_2_enter: "If required, tap the field and enter \"2000\".",
+        step3_4_2_final: "Confirm the configuration and exit the menu.",
+
+        // Step 3-4-3
+        step3_4_3_title: "Cash Desk Option",
+        step3_4_3_intro: "Disable the option \"Mandatory Amount from Cash Desk\".",
+        // Step 3-4-4
+        step3_4_4_title: "Config Verification",
+        step3_4_4_intro: "Once the POS is enabled for ECR (with ECR Protocol 17), it is necessary to verify that the option \"Mandatory Amount from Cash Desk\" is disabled by following the procedure below:",
+        step3_4_4_li1: "Access the PAX TOOLS application (as described in section 2).",
+        step3_4_4_li2: "Select Configure ECR.",
+        step3_4_4_li3: "Tap Confirm at the bottom to access the ECR 17 menu.",
+        step3_4_4_li4: "Select Other Settings (or Other Options).",
+        step3_4_4_li5: "Disable Mandatory Amount from Cash Desk, then confirm the changes before exiting the menu.",
+        // Step 3-4-5
+        step3_4_5_title: "Test Sale",
+        step3_4_5_intro: "Ask the store to perform a quick sales simulation and check whether the integrated payment method works correctly.",
+        step3_4_5_q: "Does the integrated payment method work?",
+        // Step 3-4-6
+        step3_4_6_title: "Ticket Closing",
+        step3_4_6_intro: "Resolve the ticket by selecting the following category:In Store Tech > SW > CIAO Optical > Xstore – Payments / Deposits",
+        // Step 3-4-7
+        step3_4_7_title: "L3 Escalation",
+        step3_4_7_intro: "Open a ticket and assign it to \"SSS North America – POS Triage – 3rd Level Support.\"",
+        // Step 4
+        step4_title: "MAC ID",
+        step4_intro: "On the back of the device, locate the \"Wi‑Fi MAC\"",
+        // Step 4-1
+        step4_1_title: "MAC Search",
+        step4_1_intro: "On the main homepage of the Personality Server, enter the MAC Address in the dedicated field to check whether it is located in the Depot or associated with another store.",
+        step4_1_q: "Is the MAC Address associated with another store or with the Depot?",
+        // Step 4-2
+        step4_2_title: "Local IT Escalation",
+        step4_2_intro: "Escalate the case to the Local Italy – Local IT Team.",
+        step4_2_mac: "The MAC Address code",
+        step4_2_cat: "Category: APPLICATION > CIAO OPTICAL > SW > CIAO – POS WORLDLINE (CONNECTION/CONFIGURATION)",
+        // Step 4-3
+        step4_3_title: "VLAN Setup",
+        step4_3_intro: "Therefore, access the store page for which the association is required. The Worldline POS must be added to VLAN 1 – Wireless.",
+        // Step 4-4
+        step4_4_title: "Add Device",
+        step4_4_intro: "After selecting ADD DEVICE, proceed by completing the fields as described below:",
+        step4_4_li1: "Device Status: ACTIVE",
+        step4_4_li2: "Device Type: EFT LINK CC",
+        step4_4_li3: "Asset Tag: This must be created following the format below:",
+        step4_4_li4: "Generally, all banking POS devices are assigned within the P050–P059 range.",
+        step4_4_li5: "Brand S&V: svCODICESAPp05* (e.g. sva123p050)",
+        step4_4_li6: "Brand GV: gvCODICESAPp05* (e.g. gva123p050)",
+        step4_4_li7: "Brand SGH: sghCODICESAPp05* (e.g. sgha123p050)",
+        step4_4_li8: "Brand SOLARIS: solCODICESAPp05* (e.g. sola123p050)",
+        step4_4_li9: "Confirm Asset Tag: Exactly replicate the value entered in the previous field.",
+        step4_4_li10: "MAC Address: Enter the device MAC address.",
+        step4_4_li11: "Wired or Wireless Device: WIRELESS",
+        step4_4_li12: "VLAN: Leave the default VLAN as displayed.",
+        step4_4_li13: "IP Address: Automatically populated.",
+        step4_4_confirm: "Finally, confirm the entry by selecting CREATE AND ASSIGN TO STORE.",
+        // Step 4-5
+        step4_5_title: "Wi-Fi Connect",
+        step4_5_intro: "Subsequently, the device must be connected to the WIFI_STORE_EMEA network.",
+        step4_5_q: "Does the store have the Wi‑Fi password and is it being entered correctly?",
+        // Step 4-6
+        step4_6_title: "Role Change",
+        step4_6_intro: "Locate the added device and then select CHANGE ROLE to update the POS role on the Personality Server.",
+        // Step 4-7
+        step4_7_title: "Links Check",
+        step4_7_intro: "As the second‑to‑last step, we need to check the various connections (links) between the Worldline POS device(s) and the different PCs and tablets on the Personality Server.",
+        step4_7_q: "How many POS devices does the store have?",
+        btn_one_pos: "ONE DEVICE",
+        btn_multiple_pos: "TWO OR MORE DEVICES",
+        // Step 4-7-1
+        step4_7_1_title: "Single POS",
+        step4_7_1_intro: "The store must link all IGEL devices available in the store.",
+        step4_7_1_note: "Once the operation is completed, remember to click SAVE CHANGES at the bottom of the page and return to the main screen.",
+        // Step 4-7-2
+        step4_7_2_title: "Multiple POS",
+        step4_7_2_intro: "If a store has two or more Worldline devices, no association is required, as XStore will display a selection pop‑up during the checkout process, allowing the store colleague to choose the most convenient device."
+      }
+    };
+
+/* ===========================
+ Navigazione
+ =========================== */
+const historyStack = [];
+let currentStepId = "langSelect"; // partenza dalla selezione lingua
+const visited = new Set();
+let language = "it";
+
+
+const clickTrail = [];
+window.addEventListener('DOMContentLoaded', () => {
+  showStep(currentStepId);
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('button');
+    if (!target) return;
+    const nextId = target.getAttribute('data-next');
+    if (nextId) {
+      try {
+        const itLabel = getTextFromI18n(target, 'it');
+        const enLabel = getTextFromI18n(target, 'en');
+        clickTrail.push({ stepId: currentStepId, it: itLabel, en: enLabel });
+      } catch (err) { /* ignore */ }
+      goTo(nextId); return;
+    }
+    if (target.hasAttribute('data-back')) { goBack(); return; }
+    if (target.hasAttribute('data-copy')) { copyHistory(); return; }
+  });
+
+  // Gestione ingrandimento immagini
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('.image-links a');
+    if (link) {
+      e.preventDefault();
+      openModal(link.href);
+    }
+  });
+});
+
+function showStep(stepId){
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('is-active'));
+  const stepEl = document.getElementById(stepId);
+  if (stepEl){
+    stepEl.classList.add('is-active');
+    const main = document.getElementById('steps');
+    if (main) main.focus();
+    visited.add(stepId);
+  }
+}
+function goTo(stepId){
+  if (stepId === currentStepId) return;
+  historyStack.push(currentStepId);
+  currentStepId = stepId;
+  showStep(stepId);
+}
+function goBack(){
+  if (!historyStack.length) return;
+  currentStepId = historyStack.pop();
+  showStep(currentStepId);
+}
+
+function openModal(src) {
+  const modal = document.getElementById('imageModal');
+  const img = document.getElementById('imgFull');
+  img.src = src;
+  modal.classList.add('is-visible');
+}
+function closeModal() {
+  document.getElementById('imageModal').classList.remove('is-visible');
+}
+
+/// --- i18n helpers (versione pulita) ---
+function t(key) {
+  // fallback: it -> key
+  if (translations[language] && translations[language][key] != null) {
+    return translations[language][key];
+  }
+  if (translations.it && translations.it[key] != null) {
+    return translations.it[key];
+  }
+  return key;
+}
+
+function looksLikeHtml(str) {
+  // check semplice: se contiene <tag> o entità &...;
+  const s = String(str || "");
+  return /<[^>]+>/.test(s) || /&[a-zA-Z#0-9]+;/.test(s);
+}
+
+function applyTranslations() {
+  document.documentElement.setAttribute("lang", language);
+
+  const titleEl = document.querySelector("title[data-i18n='app_title']");
+  if (titleEl) titleEl.textContent = t("app_title");
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    const val = t(key);
+    const attr = el.getAttribute("data-i18n-attr");
+    const type = el.getAttribute("data-i18n-type");
+
+    if (attr) {
+      attr.split(",").forEach(a => el.setAttribute(a.trim(), val));
+    } else if (type === "html" || looksLikeHtml(val)) {
+      el.innerHTML = val;
+    } else {
+      el.textContent = val;
+    }
+  });
+}
+
+function setLanguage(lang) {
+  language = (lang === "en") ? "en" : "it";
+  applyTranslations();
+
+  // se siamo nella selezione lingua, passiamo allo step1
+  if (currentStepId === "langSelect") {
+    historyStack.length = 0;
+    historyStack.push("langSelect");
+    currentStepId = "step1";
+    showStep(currentStepId);
+  }
+}
+
+// --- helpers per copia ---
+function stripHTML(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || "").trim();
+}
+
+function getTextFromI18n(el, langCode) {
+  const key = el.getAttribute("data-i18n");
+  const type = el.getAttribute("data-i18n-type");
+  if (key) {
+    let val =
+      (translations[langCode] && translations[langCode][key]) ||
+      (translations.it && translations.it[key]) ||
+      "";
+
+    if (!val) return (el.innerText || "").trim();
+    if (type === "html" || looksLikeHtml(val)) return stripHTML(val);
+    return String(val).trim();
+  }
+  return (el.innerText || "").trim();
+}
+
+function copyHistory() {
+  const prefixEn = 'The store reported issues with the POS. Please find below the troubleshooting steps performed and the checks carried out';
+  const prefixIt = 'Lo store ha segnalato problemi con il POS. Di seguito il troubleshooting effettuato e le verifiche eseguite.';
+
+  const choiceByStep = {};
+  clickTrail.forEach(c => { if (c.stepId) choiceByStep[c.stepId] = c; });
+  const SKIP_STEPS = new Set(['langSelect','step1']);
+
+  // Exclusion for step1B bullets (not applicable here)
+  const shouldKeepLine = (stepId, langCode, text) => {
+    return true; // Always keep lines for POS troubleshooting as there are no specific exclusions for this file
+  };
+
+  // Build bullets-only with blank line between steps
+  const buildSection = (langCode) => {
+    let sec = '';
+    const allSteps = Array.from(visited);
+    if (!allSteps.includes(currentStepId)) allSteps.push(currentStepId);
+    allSteps.forEach((stepId, idx) => {
+      if (SKIP_STEPS.has(stepId)) return;
+      const step = document.getElementById(stepId);
+      if (!step) return;
+
+      const ch = choiceByStep[stepId];
+      const chosen = ch ? (langCode === 'en' ? ch.en : ch.it) : '';
+
+      // Emit lines
+      let appendedChoice = false;
+      const lines = step.querySelectorAll('p, li');
+      lines.forEach(node => {
+        let line = getTextFromI18n(node, langCode);
+        if (!line || !shouldKeepLine(stepId, langCode, line)) return;
+        if (!appendedChoice && chosen && node.tagName.toLowerCase() === 'p') {
+          line = `${line} → ${chosen}`;
+          appendedChoice = true;
+        }
+        sec += `• ${line}\n`;
+      });
+      if (chosen && !appendedChoice) {
+        sec += `→ ${chosen}\n`;
+      }
+
+      // blank line between steps
+      sec += `\n`;
+    });
+    return sec.trim();
+  };
+
+  const itSection = buildSection('it');
+  const enSection = buildSection('en');
+
+  const finalOutput = `${prefixIt}\n\n${itSection ? itSection + '\n' : ''}\n--------------------------------------\n\n${prefixEn}\n\n${enSection}`;
+
+  navigator.clipboard.writeText(finalOutput)
+    .then(() => alert(t('copy_success')))
+    .catch(() => alert(t('copy_error')));
+}
+
+
+</script>
+</body>
+</html> key = el.getAttribute("data-i18n");
+  const type = el.getAttribute("data-i18n-type");
+  if (key) {
+    let val =
+      (translations[langCode] && translations[langCode][key]) ||
+      (translations.it && translations.it[key]) ||
+      "";
+
+    if (!val) return (el.innerText || "").trim();
+    if (type === "html" || looksLikeHtml(val)) return stripHTML(val);
+    return String(val).trim();
+  }
+  return (el.innerText || "").trim();
+}
+
+function copyHistory() {
+  const prefixEn = 'The store reported issues with the POS. Please find below the troubleshooting steps performed and the checks carried out';
+  const prefixIt = 'Lo store ha segnalato problemi con il POS. Di seguito il troubleshooting effettuato e le verifiche eseguite.';
+
+  const choiceByStep = {};
+  clickTrail.forEach(c => { if (c.stepId) choiceByStep[c.stepId] = c; });
+  const SKIP_STEPS = new Set(['langSelect','step1']);
+
+  // Exclusion for step1B bullets (not applicable here)
+  const shouldKeepLine = (stepId, langCode, text) => {
+    return true; // Always keep lines for POS troubleshooting as there are no specific exclusions for this file
+  };
+
+  // Build bullets-only with blank line between steps
+  const buildSection = (langCode) => {
+    let sec = '';
+    const allSteps = Array.from(visited);
+    if (!allSteps.includes(currentStepId)) allSteps.push(currentStepId);
+    allSteps.forEach((stepId, idx) => {
+      if (SKIP_STEPS.has(stepId)) return;
+      const step = document.getElementById(stepId);
+      if (!step) return;
+
+      const ch = choiceByStep[stepId];
+      const chosen = ch ? (langCode === 'en' ? ch.en : ch.it) : '';
+
+      // Emit lines
+      let appendedChoice = false;
+      const lines = step.querySelectorAll('p, li');
+      lines.forEach(node => {
+        let line = getTextFromI18n(node, langCode);
+        if (!line || !shouldKeepLine(stepId, langCode, line)) return;
+        if (!appendedChoice && chosen && node.tagName.toLowerCase() === 'p') {
+          line = `${line} → ${chosen}`;
+          appendedChoice = true;
+        }
+        sec += `• ${line}\n`;
+      });
+      if (chosen && !appendedChoice) {
+        sec += `→ ${chosen}\n`;
+      }
+
+      // blank line between steps
+      sec += `\n`;
+    });
+    return sec.trim();
+  };
+
+  const itSection = buildSection('it');
+  const enSection = buildSection('en');
+
+  const finalOutput = `${prefixIt}\n\n${itSection ? itSection + '\n' : ''}\n--------------------------------------\n\n${prefixEn}\n\n${enSection}`;
+
+  navigator.clipboard.writeText(finalOutput)
+    .then(() => alert(t('copy_success')))
+    .catch(() => alert(t('copy_error')));
+}
+
+
+</script>
+</body>
+</html>
