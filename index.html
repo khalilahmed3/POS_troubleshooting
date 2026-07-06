@@ -108,8 +108,9 @@
       <section id="langSelect" class="step is-active" role="region" aria-labelledby="lang-title">
         <h2 id="lang-title" class="step-title" data-i18n="lang_select_title">Seleziona la lingua / Select language</h2>
         <div class="buttons-center">
-          <button type="button" class="btn" onclick="setLanguage('it')" data-i18n="btn_lang_it" data-next>Italiano 🇮🇹</button>
-          <button type="button" class="btn" onclick="setLanguage('en')" data-i18n="btn_lang_en"data-next>English 🇬🇧</button>
+          
+          <button type="button" class="btn" onclick="setLanguage('it')" data-i18n="btn_lang_it" data-next="step1">Italiano 🇮🇹</button>
+          <button type="button" class="btn" onclick="setLanguage('en')" data-i18n="btn_lang_en" data-next="step1">English 🇬🇧</button>
         </div>
       </section>
 
@@ -1242,6 +1243,213 @@ const translations = {
     };
 
 /* ===========================
+ Testi per Copia/Incolla
+ =========================== */
+const copyTranslations = {
+  // LANG SELECT - non copiare
+  // STEP 1 (Benvenuto) - non copiare
+  
+  // STEP 1 MAIN
+  step1_main: {
+    it: (choice) => `Lo store ci ha contattati per segnalare un problema con il ${choice}.`,
+    en: (choice) => `The store contacted us to report an issue with the ${choice}.`,
+    shouldCopy: true
+  },
+
+  // STEP 2
+  step2: {
+    it: (choice) => choice === 'SI' 
+      ? 'Abbiamo verificato che il POS è raggiungibile e risponde correttamente ai ping.' 
+      : 'Abbiamo verificato che il POS non è raggiungibile e non risponde ai ping.',
+    en: (choice) => choice === 'YES' 
+      ? 'We have verified that the POS device is reachable and responding to ping requests.' 
+      : 'We have verified that the POS device is not reachable and is not responding to ping requests.',
+    shouldCopy: true
+  },
+
+  // STEP 2-1
+  step2_1: {
+    it: (choice) => choice === 'SI' 
+      ? 'Abbiamo verificato che l\'indirizzo MAC del POS corrisponde a quello registrato sul Personality Server.' 
+      : 'Abbiamo verificato che l\'indirizzo MAC del POS non corrisponde a quello registrato sul Personality Server.',
+    en: (choice) => choice === 'YES' 
+      ? 'We have verified that the POS MAC address matches the one registered on the Personality Server.' 
+      : 'We have verified that the POS MAC address does not match the one registered on the Personality Server.',
+    shouldCopy: true
+  },
+
+  // STEP 2-2
+  step2_2: {
+    it: () => `Abbiamo effettuato una ricerca dell'indirizzo MAC del POS sul Personality Server per verificare la configurazione registrata.`,
+    en: () => `We searched for the POS MAC address on the Personality Server to verify the registered configuration.`,
+    shouldCopy: true
+  },
+
+  // STEP 2-3 - non copiare
+  step2_3: { shouldCopy: false },
+
+  // STEP 2-4
+  step2_4: {
+    it: () => `Abbiamo richiesto allo store di contattare l'assistenza del POS per ulteriori verifiche e supporto tecnico.`,
+    en: () => `We asked the store to contact the POS support team for further assistance and troubleshooting.`,
+    shouldCopy: true
+  },
+
+  // STEP 2-5
+  step2_5: {
+    it: (choice) => choice === 'SI' 
+      ? 'Il POS rileva correttamente la rete Wi‑Fi "WIFI_STORE_EMEA".' 
+      : 'Il POS non rileva la rete Wi‑Fi "WIFI_STORE_EMEA".',
+    en: (choice) => choice === 'YES' 
+      ? 'The POS is able to detect the "WIFI_STORE_EMEA" wireless network.' 
+      : 'The POS is unable to detect the "WIFI_STORE_EMEA" wireless network.',
+    shouldCopy: true
+  },
+
+  // STEP 2-6 - non copiare
+  step2_6: { shouldCopy: false },
+
+  // STEP 2-7
+  step2_7: {
+    it: () => `La rete "WIFI_STORE_EMEA" non viene rilevata da nessun dispositivo presente nello store.`,
+    en: () => `The "WIFI_STORE_EMEA" network is not being detected by any device connected within the store.`,
+    shouldCopy: true
+  },
+
+  // STEP 2-8
+  step2_8: {
+    it: () => `Lo store non dispone della password della rete "WIFI_STORE_EMEA" e pertanto non è in grado di inserirla sul POS.`,
+    en: () => `The store does not have the password for the "WIFI_STORE_EMEA" network and is therefore unable to enter it on the POS device.`,
+    shouldCopy: true
+  },
+
+  // STEP 2-9 - non copiare
+  step2_9: { shouldCopy: false },
+
+  // STEP 2-1-1 - non copiare
+  step2_1_1: { shouldCopy: false },
+
+  // STEP 3
+  step3: {
+    it: () => `Lo store sta riscontrando problemi con la modalità integrata del POS.`,
+    en: () => `The store is experiencing issues with the POS integrated mode.`,
+    shouldCopy: true
+  },
+
+  // STEP 3-1
+  step3_1: {
+    it: (choice) => choice === 'SI' 
+      ? 'Abbiamo chiuso e riavviato l\'applicazione Ciao su tutte le postazioni per effettuare le verifiche necessarie.' 
+      : 'Abbiamo invitato lo store a ricontattarci durante la fase di apertura o chiusura del negozio, poiché l\'applicazione Ciao deve essere chiusa su tutte le postazioni prima di poter effettuare ulteriori verifiche.',
+    en: (choice) => choice === 'YES' 
+      ? 'We closed and restarted the Ciao application on all workstations to perform the necessary checks.' 
+      : 'We advised the store to contact us again during the store opening or closing phase, as the Ciao application must be closed on all workstations before further troubleshooting can be performed.',
+    shouldCopy: true
+  },
+
+  // STEP 3-2 - non copiare
+  step3_2: { shouldCopy: false },
+
+  // STEP 3-3 - non copiare
+  step3_3: { shouldCopy: false },
+
+  // STEP 3-3-1
+  step3_3_1: {
+    it: () => `Abbiamo eseguito il riavvio dei servizi coinvolti come previsto dalla procedura di troubleshooting.`,
+    en: () => `We performed a restart of the relevant services in accordance with the documented troubleshooting procedure.`,
+    shouldCopy: true
+  },
+
+  // STEP 3-3-2 - non copiare
+  step3_3_2: { shouldCopy: false },
+  // STEP 3-3-3 - non copiare
+  step3_3_3: { shouldCopy: false },
+  // STEP 3-3-4 - non copiare
+  step3_3_4: { shouldCopy: false },
+  // STEP 3-3-5 - non copiare
+  step3_3_5: { shouldCopy: false },
+  // STEP 3-3-6 - non copiare
+  step3_3_6: { shouldCopy: false },
+
+  // STEP 3-4-1
+  step3_4_1: {
+    it: () => `Abbiamo verificato le impostazioni ECR configurate sul POS e le abbiamo trovate correttamente impostate.`,
+    en: () => `We verified the ECR settings configured on the POS device and found them to be correctly set.`,
+    shouldCopy: true
+  },
+
+  // STEP 3-4-2 - non copiare
+  step3_4_2: { shouldCopy: false },
+  // STEP 3-4-3 - non copiare
+  step3_4_3: { shouldCopy: false },
+  // STEP 3-4-4 - non copiare
+  step3_4_4: { shouldCopy: false },
+  // STEP 3-4-5 - non copiare
+  step3_4_5: { shouldCopy: false },
+
+  // STEP 3-4-6
+  step3_4_6: {
+    it: () => `Il problema è stato risolto e il servizio risulta ora correttamente funzionante.`,
+    en: () => `The issue has been resolved and the service is now functioning correctly.`,
+    shouldCopy: true
+  },
+
+  // STEP 3-4-7
+  step3_4_7: {
+    it: () => `Il problema è ancora presente e non è stato ancora risolto.`,
+    en: () => `The issue is still ongoing and has not yet been resolved.`,
+    shouldCopy: true
+  },
+
+  // STEP 4 - non copiare
+  step4: { shouldCopy: false },
+
+  // STEP 4-1
+  step4_1: {
+    it: (choice) => choice === 'SI' 
+      ? 'L\'indirizzo MAC risulta già censito sul Personality Server; pertanto, non è possibile procedere con un nuovo inserimento.' 
+      : null,
+    en: (choice) => choice === 'YES' 
+      ? 'The MAC address is already registered on the Personality Server; therefore, we are unable to add it again.' 
+      : null,
+    shouldCopy: true
+  },
+
+  // STEP 4-2 - non copiare
+  step4_2: { shouldCopy: false },
+
+  // STEP 4-3
+  step4_3: {
+    it: () => `Abbiamo eseguito la procedura di censimento sul Personality Server e verificato che la configurazione sia stata applicata correttamente.`,
+    en: () => `We have completed the registration procedure on the Personality Server and verified that the configuration was applied successfully.`,
+    shouldCopy: true
+  },
+
+  // STEP 4-4 - non copiare
+  step4_4: { shouldCopy: false },
+  // STEP 4-5 - non copiare
+  step4_5: { shouldCopy: false },
+  // STEP 4-6 - non copiare
+  step4_6: { shouldCopy: false },
+  // STEP 4-7 - non copiare
+  step4_7: { shouldCopy: false },
+
+  // STEP 4-7-1
+  step4_7_1: {
+    it: () => `Essendo un singolo POS, lo abbiamo associato a tutti i dispositivi.`,
+    en: () => `As it is a single POS, we linked it to all devices.`,
+    shouldCopy: true
+  },
+
+  // STEP 4-7-2
+  step4_7_2: {
+    it: () => `Essendoci più POS, non li abbiamo associati ad alcun dispositivo specifico.`,
+    en: () => `As there are multiple POS devices, we did not link them to any specific device.`,
+    shouldCopy: true
+  }
+};
+
+/* ===========================
  Navigazione
  =========================== */
 const historyStack = [];
@@ -1252,28 +1460,25 @@ let language = "it";
 const clickTrail = [];
 window.addEventListener('DOMContentLoaded', () => {
   showStep(currentStepId);
-  document.addEventListener('click', (e) => {
-    const target = e.target.closest('button');
-    if (!target) return;
-    const nextId = target.getAttribute('data-next');
-    if (nextId) {
-      try {
-        const itLabel = getTextFromI18n(target, 'it');
-        const enLabel = getTextFromI18n(target, 'en');
-        clickTrail.push({ stepId: currentStepId, it: itLabel, en: enLabel });
-      } catch (err) { /* ignore */ }
-      goTo(nextId); return;
-    }
-    if (target.hasAttribute('data-back')) { goBack(); return; }
-    if (target.hasAttribute('data-copy')) { copyHistory(); return; }
-  });
 
-  // Gestione ingrandimento immagini
   document.addEventListener('click', (e) => {
-    const link = e.target.closest('.image-links a');
-    if (link) {
+    const button = e.target.closest('button');
+    const imageLink = e.target.closest('.image-links a');
+
+    if (button) {
+      // Processa data-next anche se il bottone ha onclick
+      const nextId = button.getAttribute('data-next');
+      if (nextId) {
+        clickTrail.push({ stepId: currentStepId, it: getTextFromI18n(button, 'it'), en: getTextFromI18n(button, 'en') });
+        goTo(nextId);
+      } else if (button.hasAttribute('data-back')) {
+        goBack();
+      } else if (button.hasAttribute('data-copy')) {
+        copyHistory();
+      }
+    } else if (imageLink) {
       e.preventDefault();
-      openModal(link.href);
+      openModal(imageLink.href);
     }
   });
 });
@@ -1392,43 +1597,40 @@ function copyHistory() {
 
   const choiceByStep = {};
   clickTrail.forEach(c => { if (c.stepId) choiceByStep[c.stepId] = c; });
+  const SKIP_STEPS = new Set(['langSelect', 'step1']);
 
   const buildSection = (langCode) => {
     let sec = '';
     const allSteps = [...historyStack, currentStepId].filter(s => !['langSelect', 'step1'].includes(s));
-    const ansLabel  = langCode === 'it' ? '=> Risposta: ' : '=> Answer: ';
     const stepLabel = langCode === 'it' ? 'Passaggio' : 'Step';
-    const stepCount = allSteps.length;
 
     allSteps.forEach((stepId, index) => {
+      const copyDef = copyTranslations[stepId];
+      
+      // Salta gli step che non dovrebbero essere copiati
+      if (!copyDef || !copyDef.shouldCopy) return;
+
       const step = document.getElementById(stepId);
-      if (!step) return;
-
-      const titleEl = step.querySelector('h2');
+      const titleEl = step ? step.querySelector('h2') : null;
       const titleText = titleEl ? getTextFromI18n(titleEl, langCode) : stepId;
-
-      sec += `[ ${stepLabel} ${index + 1}/${stepCount} — ${titleText} ]\n`;
-
-      const ch = choiceByStep[stepId];
-      const chosen = ch ? (langCode === 'en' ? ch.en : ch.it) : '';
-
-      let appendedChoice = false;
-      const lines = step.querySelectorAll('p, li');
-      lines.forEach(node => {
-        let line = getTextFromI18n(node, langCode);
-        if (!line) return;
-        if (!appendedChoice && chosen && node.tagName.toLowerCase() === 'p') {
-          line = `${line} ${ansLabel}${chosen}`;
-          appendedChoice = true;
-        }
-        sec += `  • ${line}\n`;
-      });
-
-      if (chosen && !appendedChoice) {
-        sec += `  ${ansLabel}${chosen}\n`;
+      
+      const choiceInfo = choiceByStep[stepId];
+      const chosenValue = choiceInfo ? (langCode === 'en' ? choiceInfo.en : choiceInfo.it) : '';
+      
+      // Ottieni il testo appropriato dalla definizione
+      let copyText = '';
+      if (typeof copyDef.it === 'function') {
+        // Ha la funzione per choice
+        copyText = langCode === 'en' ? copyDef.en(chosenValue) : copyDef.it(chosenValue);
+      } else if (typeof copyDef.it === 'string') {
+        copyText = langCode === 'en' ? copyDef.en : copyDef.it;
+      } else {
+        copyText = langCode === 'en' ? copyDef.en() : copyDef.it();
       }
 
-      sec += `\n`;
+      if (copyText) {
+        sec += `- ${copyText}\n`;
+      }
     });
 
     return sec.trim();
